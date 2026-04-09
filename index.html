@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartFleet - LINE Booking</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #f1f5f9; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="text-slate-800 flex h-screen overflow-hidden">
+
+    <aside class="w-64 bg-slate-900 text-slate-300 flex flex-col z-20 shadow-xl">
+        <div class="h-16 flex items-center px-6 bg-slate-950 text-white font-bold text-xl border-b border-slate-800">SmartFleet</div>
+
+        <div class="p-6 border-b border-slate-800 flex items-center gap-3">
+            <img id="user-picture" class="w-12 h-12 rounded-full border-2 border-blue-500 shadow-md" src="https://ui-avatars.com/api/?name=Loading" alt="Profile">
+            <div class="overflow-hidden">
+                <div id="user-name" class="text-sm font-bold text-white truncate">กำลังโหลด...</div>
+                <div class="text-xs text-emerald-400 flex items-center gap-1">● LINE Connected</div>
+            </div>
+        </div>
+
+        <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+            <button onclick="switchPage('booking')" id="menu-booking" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-colors">จองรถสำนักงาน</button>
+            <button onclick="switchPage('dashboard')" id="menu-dashboard" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-colors">แดชบอร์ดสถานะรถ</button>
+            <button onclick="switchPage('fleet')" id="menu-fleet" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-colors">ข้อมูลรถยนต์ทั้งหมด</button>
+            <button onclick="switchPage('history')" id="menu-history" class="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg hover:bg-slate-800 hover:text-white transition-colors">ประวัติการจองของฉัน</button>
+        </nav>
+
+        <div class="p-4 border-t border-slate-800">
+            <button onclick="liff.closeWindow()" class="w-full flex items-center gap-3 px-4 py-2 text-sm font-medium rounded-lg text-slate-400 hover:text-white hover:bg-red-500/20 transition-colors">
+                ปิดหน้าต่าง
+            </button>
+        </div>
+    </aside>
+
+    <main class="flex-1 flex flex-col h-screen overflow-hidden bg-slate-50">
+        <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-8 shadow-sm z-10">
+            <h1 id="page-title" class="text-xl font-bold text-slate-800">จองรถสำนักงาน</h1>
+            <div id="today-date" class="text-sm text-slate-500 hidden md:block">3 เมษายน 2026</div>
+        </header>
+
+        <div class="flex-1 overflow-y-auto p-6 md:p-8">
+            <div id="page-booking" class="page-section max-w-4xl mx-auto">
+                <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-2">ฟอร์มจองรถ</h2>
+                    <form class="space-y-6 mt-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">ชื่อผู้จอง (จาก LINE)</label>
+                                <input type="text" id="form-line-name" readonly class="w-full px-4 py-2.5 bg-slate-100 border border-slate-200 rounded-lg font-bold text-blue-600">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-slate-700 mb-1">เบอร์โทรศัพท์ติดต่อ</label>
+                                <input type="tel" placeholder="08X-XXX-XXXX" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">สถานที่ปลายทาง</label>
+                            <input type="text" id="form_dest" class="w-full px-4 py-2.5 border border-slate-300 rounded-lg" placeholder="ระบุสถานที่">
+                        </div>
+                        <div class="flex justify-end pt-4">
+                            <button type="button" onclick="showPopup('booking_success')" class="bg-blue-600 text-white font-medium py-3 px-8 rounded-xl shadow-lg hover:bg-blue-700">ยืนยันการจอง</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div id="page-dashboard" class="page-section hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-sm font-bold">EV</div><span class="text-emerald-700 text-xs font-bold">● ว่าง</span></div><h4 class="font-bold text-slate-800 text-xl">ออ 7777 กทม.</h4><p class="text-sm text-slate-500 mb-4">รถไฟฟ้า (EV)</p><div class="text-sm font-medium text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">EV Station 1</div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-sm font-bold">SEDAN</div><span class="text-emerald-700 text-xs font-bold">● ว่าง</span></div><h4 class="font-bold text-slate-800 text-xl">ขข 5678 กทม.</h4><p class="text-sm text-slate-500 mb-4">รถเก๋ง (Sedan)</p><div class="text-sm font-medium text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">ลานจอด A1</div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-sm font-bold">PICKUP</div><span class="text-emerald-700 text-xs font-bold">● ว่าง</span></div><h4 class="font-bold text-slate-800 text-xl">ชช 4444 กทม.</h4><p class="text-sm text-slate-500 mb-4">รถกระบะ 4 ประตู</p><div class="text-sm font-medium text-slate-600 bg-slate-50 p-2 rounded-xl border border-slate-100">ลานจอด B2</div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-sm font-bold">VAN</div><span class="text-blue-700 text-xs font-bold animate-pulse">● กำลังไป</span></div><h4 class="font-bold text-slate-800 text-xl">กค 1234 กทม.</h4><p class="text-sm text-slate-500 mb-2">รถตู้ 10 ที่นั่ง</p><div class="text-xs text-blue-800 bg-blue-50 p-2 rounded-xl border border-blue-100">นิคมฯ ระยอง</div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-blue-100 text-blue-600 px-3 py-1 rounded-lg text-sm font-bold">SEDAN</div><span class="text-blue-700 text-xs font-bold animate-pulse">● กำลังไป</span></div><h4 class="font-bold text-slate-800 text-xl">มม 4567 กทม.</h4><p class="text-sm text-slate-500 mb-2">รถเก๋ง (Sedan)</p><div class="text-xs text-blue-800 bg-blue-50 p-2 rounded-xl border border-blue-100">สยามสแควร์</div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-indigo-100 text-indigo-600 px-3 py-1 rounded-lg text-sm font-bold">PICKUP</div><span class="text-indigo-700 text-xs font-bold animate-pulse">● กำลังกลับ</span></div><h4 class="font-bold text-slate-800 text-xl">ฮฮ 9999 กทม.</h4><p class="text-sm text-slate-500 mb-2">กระบะตอนเดียว</p><div class="text-xs text-indigo-800 bg-indigo-50 p-2 rounded-xl border border-indigo-100">คลังสินค้า</div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-purple-100 text-purple-600 px-3 py-1 rounded-lg text-sm font-bold">VIP VAN</div><span class="text-purple-700 text-xs font-bold">● เติมน้ำมัน</span></div><h4 class="font-bold text-slate-800 text-xl">บบ 2222 กทม.</h4><p class="text-sm text-slate-500 mb-2">รถตู้ VIP 9 ที่นั่ง</p><div class="text-xs text-purple-800 bg-purple-50 p-2 rounded-xl border border-purple-100">ปตท. วิภาวดี</div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm"><div class="flex justify-between items-start mb-4"><div class="bg-amber-100 text-amber-600 px-3 py-1 rounded-lg text-sm font-bold">SEDAN</div><span class="text-amber-700 text-xs font-bold">● เข้าซ่อม</span></div><h4 class="font-bold text-slate-800 text-xl">ฒฒ 1111 กทม.</h4><p class="text-sm text-slate-500 mb-2">รถเก๋ง (Sedan)</p><div class="text-xs text-amber-800 bg-amber-50 p-2 rounded-xl border border-amber-100">ซ่อมแอร์</div></div>
+                </div>
+            </div>
+
+            <div id="page-fleet" class="page-section hidden">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-emerald-50 h-32 flex items-center justify-center text-3xl font-bold text-emerald-600">EV</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">ออ 7777</div><ul class="text-xs text-slate-600"><li>5 ที่นั่ง</li><li>EV 100%</li></ul></div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-slate-50 h-32 flex items-center justify-center text-3xl font-bold text-slate-600">SEDAN</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">ขข 5678</div><ul class="text-xs text-slate-600"><li>4 ที่นั่ง</li><li>เบนซิน 95</li></ul></div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-slate-50 h-32 flex items-center justify-center text-3xl font-bold text-slate-600">SEDAN</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">มม 4567</div><ul class="text-xs text-slate-600"><li>4 ที่นั่ง</li><li>เบนซิน 95</li></ul></div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-slate-50 h-32 flex items-center justify-center text-3xl font-bold text-slate-600">SEDAN</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">ฒฒ 1111</div><ul class="text-xs text-slate-600"><li>4 ที่นั่ง</li><li>เบนซิน 95</li></ul></div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-slate-50 h-32 flex items-center justify-center text-3xl font-bold text-slate-600">VAN</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">กค 1234</div><ul class="text-xs text-slate-600"><li>10 ที่นั่ง</li><li>ดีเซล</li></ul></div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-slate-50 h-32 flex items-center justify-center text-3xl font-bold text-slate-600">VIP VAN</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">บบ 2222</div><ul class="text-xs text-slate-600"><li>9 ที่นั่ง VIP</li><li>ดีเซล</li></ul></div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-slate-50 h-32 flex items-center justify-center text-3xl font-bold text-slate-600">PICKUP</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">ชช 4444</div><ul class="text-xs text-slate-600"><li>4 ประตู</li><li>ดีเซล</li></ul></div></div>
+                    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm"><div class="bg-slate-50 h-32 flex items-center justify-center text-3xl font-bold text-slate-600">PICKUP</div><div class="p-5"><div class="bg-slate-800 text-white text-center py-1 rounded font-bold mb-3 text-sm">ฮฮ 9999</div><ul class="text-xs text-slate-600"><li>ตอนเดียว</li><li>ดีเซล</li></ul></div></div>
+                </div>
+            </div>
+
+            <div id="page-history" class="page-section hidden">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">ประวัติการจองของฉัน</h2>
+                    <table class="w-full text-left border-collapse min-w-[800px]">
+                        <thead><tr class="bg-slate-100 text-sm border-b"><th class="p-4 font-bold">วัน/เวลา</th><th class="p-4 font-bold">ปลายทาง</th><th class="p-4 font-bold">รถ</th><th class="p-4 font-bold">สถานะ</th><th class="p-4 font-bold text-center">จัดการ</th></tr></thead>
+                        <tbody class="text-sm divide-y">
+                            <tr id="row-booking-1" class="hover:bg-slate-50 transition-colors">
+                                <td class="p-4"><div id="disp-time" class="font-bold text-slate-800">10 เม.ย. 2026</div></td>
+                                <td class="p-4 font-medium text-blue-600" id="disp-dest">สยามสแควร์ กรุงเทพฯ</td>
+                                <td class="p-4" id="disp-car">รถเก๋ง (Sedan)</td>
+                                <td class="p-4"><span class="bg-amber-100 text-amber-700 px-3 py-1 rounded-full text-xs font-bold">รอตรวจสอบ</span></td>
+                                <td class="p-4 flex justify-center gap-2">
+                                    <button onclick="openEditPopup()" class="bg-blue-50 text-blue-700 border border-blue-200 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-100">แก้ไข</button>
+                                    <button onclick="openCancelConfirm()" class="bg-red-50 text-red-700 border border-red-200 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-red-100">ยกเลิก</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="app-modal" class="fixed inset-0 bg-slate-900/50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-2xl p-8 max-w-lg w-full mx-4 shadow-2xl">
+            <h3 id="modal-title" class="text-xl font-bold mb-2"></h3>
+            <div id="modal-body" class="text-slate-600 mb-6 border-t pt-4"></div>
+            <div class="flex justify-end gap-3">
+                <button onclick="closeModal()" class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg border font-medium">ปิด</button>
+                <button id="modal-confirm-btn" class="text-white px-6 py-2 rounded-lg font-bold"></button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. ตั้งค่า LINE LIFF
+        async function initLIFF() {
+            try {
+                await liff.init({ liffId: "ใส่_LIFF_ID_ของพี่ที่นี่" }); // ไปสร้าง LIFF ID ใน LINE Developers
+                if (!liff.isLoggedIn()) {
+                    liff.login();
+                } else {
+                    const profile = await liff.getProfile();
+                    document.getElementById('user-name').innerText = profile.displayName;
+                    document.getElementById('user-picture').src = profile.pictureUrl;
+                    document.getElementById('form-line-name').value = profile.displayName;
+                }
+            } catch (err) {
+                console.error("LIFF Error: ", err);
+                // กรณีเปิดใน Browser ปกติ ให้แสดงชื่อทดสอบ
+                document.getElementById('user-name').innerText = "ทดสอบ (Browser)";
+                document.getElementById('form-line-name').value = "ชื่อพนักงานทดสอบ";
+            }
+        }
+
+        // 2. ฟังก์ชันเดิมทั้งหมด (สลับหน้า, เปิดป๊อปอัป)
+        function switchPage(pageId) {
+            document.querySelectorAll('.page-section').forEach(p => p.classList.add('hidden'));
+            document.getElementById('page-' + pageId).classList.remove('hidden');
+            document.getElementById('page-title').innerText = document.getElementById('menu-'+pageId).innerText;
+            document.querySelectorAll('nav button').forEach(btn => btn.classList.remove('bg-blue-600', 'text-white'));
+            document.getElementById('menu-'+pageId).classList.add('bg-blue-600', 'text-white');
+        }
+
+        function closeModal() { document.getElementById('app-modal').classList.replace('flex', 'hidden'); }
+
+        function openModal(title, body, confirmText, confirmClass, action) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-body').innerHTML = body;
+            const btn = document.getElementById('modal-confirm-btn');
+            if(confirmText) {
+                btn.innerText = confirmText; btn.className = confirmClass + " px-6 py-2 rounded-lg font-bold";
+                btn.classList.remove('hidden'); btn.onclick = action;
+            } else { btn.classList.add('hidden'); }
+            document.getElementById('app-modal').classList.replace('hidden', 'flex');
+        }
+
+        function openEditPopup() {
+            const current = document.getElementById('disp-dest').innerText;
+            const body = `<input type="text" id="edit-val" value="${current}" class="w-full p-2 border rounded mt-2">`;
+            openModal("แก้ไขปลายทาง", body, "บันทึก", "bg-blue-600", function(){
+                document.getElementById('disp-dest').innerText = document.getElementById('edit-val').value;
+                closeModal();
+                setTimeout(() => { openModal("สำเร็จ", "แก้ไขข้อมูลแล้ว", null, "", null); }, 300);
+            });
+        }
+
+        function openCancelConfirm() {
+            openModal("ยืนยันยกเลิก", "คุณต้องการยกเลิกใช่หรือไม่?", "ยืนยันยกเลิก", "bg-red-600", function(){
+                closeModal();
+                setTimeout(() => { 
+                    openModal("สำเร็จ", "ยกเลิกรายการแล้ว", null, "", null); 
+                    document.getElementById('row-booking-1').classList.add('opacity-40', 'pointer-events-none');
+                }, 300);
+            });
+        }
+
+        function showPopup(type) {
+            if(type === 'booking_success') {
+                openModal("สำเร็จ!", "ส่งคำขอจองรถแล้วค่ะ", null, "", null);
+                switchPage('history');
+            }
+        }
+
+        // รันคำสั่งเริ่ม LIFF
+        initLIFF();
+        switchPage('booking');
+    </script>
+</body>
+</html>
